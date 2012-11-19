@@ -1,0 +1,63 @@
+
+
+
+
+
+
+
+
+. "../pkg_prepare.sh" || { echo "Unable to load pkg_prepare.sh"; exit 1; }
+
+PACKAGE_NAME="statcollector-agent"
+PACKAGE_VERSION=""
+BUILD_NO="1"
+
+##############################################
+#                  main                      #
+##############################################
+
+test "`id -u`" != "0" && die "You must be r00t to do that."
+
+PKG=`mktemp -d`
+test -z "$PKG" && die "Unable to create temporary install directory."
+chmod 755 "$PKG" || die "Unable to change permissions on temporary install directory."
+
+PKG_BASEDIR="`pwd`"
+BASEDIR="${PKG_BASEDIR}/../../.."
+
+PACKAGE_VERSION=`$BASEDIR/bin/statcollector-agent.pl -V | head -n 1 | awk '{print $2}'`
+test -z "$PACKAGE_VERSION" && die "Undefined package version."
+echo "NAME: $PACKAGE_NAME, VERSION $PACKAGE_VERSION"
+export PACKAGE_NAME PACKAGE_VERSION
+
+if [ ! -f "/etc/slackware-version" -a ! -f "/etc/slamd64-version" -a ! -f "/etc/bluewhite64-version" ]; then
+	die "You need to create this package on a SLACKWARE-like linux distribution."
+fi
+
+# run prepare function
+pkg_prepare_statcollector_agent "$BASEDIR" "$PKG" || die "Unable to prepare distribution."
+
+chown -R root:root "${PKG}"
+
+# install init.d script
+mkdir -p "${PKG}/etc/rc.d/init.d" || die "Unable to create init.d directory."
+cp ../init.statcollector-agent "${PKG}/etc/rc.d/init.d/statcollector-agent" || die "Unable to install init script."
+chmod 755 ${PKG}/etc/rc.d/init.d/*
+# install init.d configuration
+mkdir -p "${PKG}/etc/sysconfig"
+cp ../statcollector-agent.conf "${PKG}/etc/sysconfig/statcollector-agent.new" || die "Unable to install init.d config."
+
+# remove svn shit
+find "${PKG}" -type d -name .svn | xargs rm -rf
+
+# create slackware package
+echo "Creating slackware package."
+cd "$PKG" || die "Unable to enter pkg dir."
+mkdir -p install || die "Unable to create install dir."
+cp "$PKG_BASEDIR/slack-desc.agent" "install/slack-desc" || die "... 1"
+cp "$PKG_BASEDIR/slack-required.agent" "install/slack-required" || die "... 2"
+cp "$PKG_BASEDIR/doinst.sh" "install"  || die "... 3"
+makepkg -l y -c n "/tmp/${PACKAGE_NAME}-${PACKAGE_VERSION}-noarch-${BUILD_NO}.tgz" || die "Error executing makepkg(8)."
+echo "Package dropped in /tmp"
+
+# EOF

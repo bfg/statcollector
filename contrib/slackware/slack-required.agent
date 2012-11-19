@@ -1,0 +1,7 @@
+perl
+perl-poe
+perl-io-stringy
+perl-log-log4perl
+perl-log-dispatch
+perl-uri
+perl-libwww-perl

@@ -1,0 +1,12 @@
+Package: ${PACKAGE}
+Version: ${VERSION}
+Section: base
+Priority: optional
+Architecture: all
+Depends: perl,
+ statcollector-agent (= ${VERSION}),
+ libxml-parser-perl,
+ libxml-simple-perl
+Suggests: libev-perl
+Maintainer: charlie.root@acme.com
+Description: statcollector - flexible statistics collector

@@ -1,0 +1,48 @@
+#!/bin/bash
+
+. "../pkg_prepare.sh" || { echo "Unable to load pkg_prepare.sh"; exit 1; }
+
+PACKAGE_NAME="statcollector"
+PACKAGE_VERSION=""
+BUILD_NO="1"
+
+##############################################
+#                  main                      #
+##############################################
+
+test "`id -u`" != "0" && die "You must be r00t to do that."
+
+PKG=`mktemp -d`
+test -z "$PKG" && die "Unable to create temporary install directory."
+chmod 755 "$PKG" || die "Unable to change permissions on temporary install directory."
+
+PKG_BASEDIR="`pwd`"
+BASEDIR="${PKG_BASEDIR}/../.."
+
+PACKAGE_VERSION=`$BASEDIR/bin/statcollector.pl -V | head -n 1 | awk '{print $2}'`
+test -z "$PACKAGE_VERSION" && die "Undefined package version."
+echo "name: $PACKAGE_NAME, version $PACKAGE_VERSION"
+export PACKAGE_NAME PACKAGE_VERSION
+	
+if ! lsb_release -d | awk '{print $2}' | grep -Eqi 'debian|ubuntu'; then
+	die "You need to create this package on a DEBIAN-like linux distribution."
+fi
+
+# run prepare function
+pkg_prepare_statcollector "$BASEDIR" "$PKG" || die "Unable to prepare distribution."
+chown -R root:root "${PKG}"
+
+# copy debian package control files.
+rm -rf "${PKG}/DEBIAN"
+cp -ra "${PKG_BASEDIR}/DEBIAN" "${PKG}/DEBIAN"
+
+# remove svn shit
+find "${PKG}" -type d -name .svn | xargs rm -rf
+
+# create package
+pkg_create_debian "$PKG"
+
+# cleanup
+# rm -rf "${PKG}"
+
+# EOF

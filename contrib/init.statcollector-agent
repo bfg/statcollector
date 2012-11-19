@@ -1,0 +1,106 @@
+#!/bin/sh
+
+
+
+
+
+
+
+
+
+
+### BEGIN INIT INFO
+# Provides:             statcollector-agent
+# Required-Start:       $network $local_fs $remote_fs
+# Required-Stop:                                     
+# Default-Start:        2 3 4 5                      
+# Default-Stop:         0 1 6                        
+# Short-Description:    OS performance counter collector agent  
+### END INIT INFO           
+
+
+STATCOLLECTOR_AGENT_OPT=""
+
+# load "configuration file"
+for f in /etc/{default,sysconfig}/statcollector-agent; do
+	if [ -f "${f}" -a -r "${f}" ]; then
+		. "${f}" >/dev/null 2>&1
+		break
+	fi
+done
+
+BIN="/usr/sbin/statcollector-agent.pl"
+SVC="statcollector-agent"
+
+svc_start() {
+	echo -n "Starting $SVC: "
+	${BIN} ${STATCOLLECTOR_AGENT_OPT} >/dev/null 2>&1
+	if [ "$?" = "0" ]; then
+		echo "ok"
+		return 0
+	else
+		echo "failed"
+		return 1
+	fi
+}
+
+svc_stop() {
+	echo -n "Stopping $SVC: "
+	pid=`svc_getpid`
+	if [ -z "$pid" ]; then
+		echo "failed; $SVC is stopped."
+		return 1
+	else
+		kill -9 ${pid} >/dev/null 2>&1
+		if [ "$?" = "0" ]; then
+			echo "ok"
+			return 0
+		else
+			echo "failed"
+			return 1
+		fi
+	fi
+}
+
+svc_status() {
+	pid=`svc_getpid`
+	if [ -z "$pid" ]; then
+		echo "$SVC is stopped."
+		return 1
+	else
+		echo "$SVC is running as pid: $pid"
+		return 0
+	fi
+}
+
+svc_getpid() {
+	ps -ef | grep "${BIN}" | grep -v grep | awk '{print $2}'
+}
+
+case $1 in
+	start)
+		svc_start
+		;;
+	
+	stop)
+		svc_stop
+		;;
+	
+	restart)
+		svc_stop
+		sleep 1
+		svc_start
+		;;
+	
+	status)
+		svc_status
+		exit $?
+		;;
+
+	*)
+		echo "Usage: `basename $0` {start|stop|restart|status}"
+		exit 1
+		;;
+esac
+
+exit $?

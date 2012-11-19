@@ -1,0 +1,15 @@
+Package: ${PACKAGE}
+Version: ${VERSION}
+Section: base
+Priority: optional
+Architecture: all
+Depends: perl,
+ libwww-perl (>= 5.831-1),
+ libio-stringy-perl,
+ liblog-log4perl-perl,
+ liblog-dispatch-perl,
+ libpoe-perl,
+ liburi-perl,
+ ucf
+Maintainer: charlie.root@acme.com
+Description: statcollector-agent - flexible OS performance counter gathering agent
