@@ -232,7 +232,7 @@ sub _marshall {
   
   my $dict = $data->getContent();
   foreach my $key (keys %{$dict}) {
-    $buf .= $host . '.' . $key . " " . $ts . " " . $dict->{$key} . "\n";
+    $buf .= $host . '.' . $key . " " . $dict->{$key} . " " . $ts . "\n";
   }
   
   return $buf;
@@ -352,6 +352,7 @@ sub _tcpConnErr {
     = "Error $errno on graphite server connection wheel $wid "
     . "[$self->{host} port $self->{port}]: "
     . $errstr;
+  $_log->error($self->getStorageSignature(), $err);
 
   # destroy wheels
   $self->{_wconn} = undef;
